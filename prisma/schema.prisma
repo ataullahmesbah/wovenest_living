@@ -1,0 +1,88 @@
+// Wovenest Living — Prisma schema
+//
+// The storefront (products, categories, blog posts, testimonials) reads from
+// the static demo dataset in `src/data/` so the site works instantly with
+// zero database setup. The models below match the PRD's data design and are
+// ready to wire up for a real deployment — Product/Category/BlogPost/
+// Testimonial/CartItem can be seeded from `src/data/` once you're ready to
+// move off demo content. ContactMessage and NewsletterSubscriber are already
+// live: the /contact form and newsletter signup write to this database.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String
+  price       Float
+  salePrice   Float?
+  images      String[]
+  stock       Int        @default(0)
+  isFeatured  Boolean    @default(false)
+  isNew       Boolean    @default(false)
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime   @default(now())
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  name     String
+  slug     String     @unique
+  image    String
+  parentId String?
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
+  products Product[]
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String
+  coverImage  String
+  tags        String[]
+  publishedAt DateTime @default(now())
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  avatar    String
+  rating    Int
+  review    String
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  subscribedAt  DateTime @default(now())
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  sessionId String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+}
